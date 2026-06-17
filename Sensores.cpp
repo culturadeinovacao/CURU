@@ -61,11 +61,29 @@ void lerSensores(float &temp, float &umid, int &soloPct, int &lux, float &bateri
   lux = (int)luzRaw;
 
   // --- Bateria (Divisor Resistivo Documentado) ---
-  int mvBruto = 0;
-  for (int i = 0; i < 16; i++) {
-    mvBruto += analogReadMilliVolts(PIN_BATERIA);
-  }
-  bateriaV = (mvBruto / 16.0f / 1000.0f) * BATERIA_DIVISOR;
+  analogSetPinAttenuation(PIN_BATERIA, ADC_11db);
+  analogReadResolution(12);
 
+  
+  static float calcularTensaoBateriaCalibrada() {
+  uint32_t somaMv = 0;
+
+  
+  for (int i = 0; i < AMOSTRAS_ADC; i++) {
+    // API Nativa do S3 que lê o eFuse gravado de fábrica
+    somaMv += analogReadMilliVolts(PIN_BATERIA);
+    delay(2); 
+  }
+
+  float mediaMv = somaMv / (float)AMOSTRAS_ADC;
+  float tensaoRealBateria = (mediaMv * FATOR_DIVISOR) / 1000.0;
+
+  // Trava de segurança lógica
+  if (tensaoRealBateria < 0.0) tensaoRealBateria = 0.0;
+  if (tensaoRealBateria > 4.25) tensaoRealBateria = 4.25;
+
+  return tensaoRealBateria;
+}
+bateriaV = calcularTensaoBateriaCalibrada()
   Serial.printf("[DADOS LIDOS] Temp: %.1f C | Umid: %.1f %% | Solo: %d %% | Luz: %d lx | Bat: %.2f V\n", temp, umid, soloPct, lux, bateriaV);
 }
