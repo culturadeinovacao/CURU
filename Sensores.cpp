@@ -32,7 +32,7 @@ void lerSensores(float &temp, float &umid, int &soloPct, int &lux, float &bateri
     if (!isnan(temp) && !isnan(umid)) break;
     
     if (i < MAX_DHT_RETRIES - 1) {
-      delay(2000);
+      delay(500);
       esp_task_wdt_reset(); 
     }
   }
