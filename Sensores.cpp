@@ -76,7 +76,7 @@ void lerSensores(float &temp, float &umid, int &soloPct, int &lux, float &bateri
   }
 
   float mediaMv = somaMv / (float)AMOSTRAS_ADC;
-  float tensaoRealBateria = (mediaMv * FATOR_DIVISOR) / 1000.0;
+  float tensaoRealBateria = (mediaMv * BATERIA_DIVISOR) / 1000.0;
 
   // Trava de segurança lógica
   if (tensaoRealBateria < 0.0) tensaoRealBateria = 0.0;
