@@ -41,6 +41,7 @@
 #define BATERIA_R2       100000.0f
 #define BATERIA_DIVISOR  ((BATERIA_R1 + BATERIA_R2) / BATERIA_R2)
 #define BATERIA_MINIMA_V 3.2f // Corte para evitar brownout do ESP32 ao acionar o rádio
+#define AMOSTRAS_ADC  20      // Quantidade de leituras para o filtro
 
 // =============================================
 // TEMPOS DE DEEP SLEEP
