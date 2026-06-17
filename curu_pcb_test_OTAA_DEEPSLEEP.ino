@@ -42,11 +42,18 @@ void setup() {
   Wire.begin(I2C_SDA, I2C_SCL);
   inicializarDisplays(codigoErroGlobal);
 
-  // 1. INICIALIZA O RÁDIO PRIMEIRO (Trata o JOIN e restauração NVS)
+  // 1. INICIALIZA APENAS O RÁDIO PRIMEIRO (Isso pode demorar de 2 a 10s dependendo da rede)
   inicializarLoRa(codigoErroGlobal); 
 
-  // 2. VERIFICA SE TEMOS REDE (Se a flag de falha de JOIN NÃO foi ativada)
-  if ((codigoErroGlobal & ERR_JOIN) == 0) {
+  // CHECKPOINT 1: Se o LoRa demorou quase todo o tempo máximo, aborta os sensores!
+  if (millis() > TEMPO_MAXIMO_ACORDADO_MS) {
+    Serial.println("\n[PANICO] Tempo limite de execução estourado! Abortando sensores.");
+    codigoErroGlobal |= ERR_TIMEOUT;
+    Serial.println("[SISTEMA] Configurando alarme para 10 MINUTOS (Retry).");
+    esp_sleep_enable_timer_wakeup(TEMPO_SLEEP_RETRY);
+  }
+  // 2. VERIFICA SE TEMOS REDE E SE TEMOS TEMPO DE SOBRA
+  else if ((codigoErroGlobal & ERR_JOIN) == 0) {
     
     Serial.println("\n--- [REDE OK] Ligando sensores e realizando leituras ---");
     inicializarSensores(codigoErroGlobal); 
@@ -54,20 +61,17 @@ void setup() {
     float temperatura, umidade, tensaoBateria; 
     int umidadeSolo, luminosidade;
     
+    // Lê e Transmite (Totalmente não-bloqueante agora)
     lerSensores(temperatura, umidade, umidadeSolo, luminosidade, tensaoBateria, codigoErroGlobal);
     transmitirDadosLoRa(temperatura, umidade, umidadeSolo, luminosidade, tensaoBateria, codigoErroGlobal);
 
-    Serial.println("\n[SISTEMA] Missão Cumprida. Configurando alarme para 5 MINUTOS.");
+    Serial.println("\n[SISTEMA] Missão Cumprida. Configurando alarme para 1 HORA.");
     esp_sleep_enable_timer_wakeup(TEMPO_SLEEP_NORMAL);
-    
-    // Zera os erros apenas se a rodada de comunicação e leitura foi um sucesso,
-    // preparando a placa limpa para o próximo ciclo
-    codigoErroGlobal = ERR_NONE; 
 
   } else {
-    // 3. SE NÃO TIVER REDE, ABORTA LEITURAS PARA POUPAR BATERIA
-    Serial.println("\n--- [REDE OFFLINE] Falha no JOIN. Abortando leitura dos sensores ---");
-    Serial.println("[SISTEMA] Configurando alarme rápido de retentativa para 1 MINUTO.");
+    // 3. SE NÃO TIVER REDE, ABORTA TUDO
+    Serial.println("\n--- [REDE OFFLINE] Abortando leitura para poupar bateria ---");
+    Serial.println("[SISTEMA] Configurando alarme para 10 MINUTOS.");
     esp_sleep_enable_timer_wakeup(TEMPO_SLEEP_RETRY);
   }
 
