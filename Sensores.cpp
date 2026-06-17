@@ -84,6 +84,6 @@ void lerSensores(float &temp, float &umid, int &soloPct, int &lux, float &bateri
 
   return tensaoRealBateria;
 }
-bateriaV = calcularTensaoBateriaCalibrada()
+bateriaV = calcularTensaoBateriaCalibrada();
   Serial.printf("[DADOS LIDOS] Temp: %.1f C | Umid: %.1f %% | Solo: %d %% | Luz: %d lx | Bat: %.2f V\n", temp, umid, soloPct, lux, bateriaV);
 }
